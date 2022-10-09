@@ -1,0 +1,106 @@
+﻿@page "/explicit-adams"
+@inject IDUSolver _duSolver
+@inject HttpClient httpClient
+
+<div class="container">
+    <div>
+        <h4>Подобрать tow: </h4>
+        <button class="btn btn-primary" @onclick="FindTow" disabled="@(Tows.Count > 0)">подобрать</button>
+        <button class="btn btn-warning" @onclick="ResetTow" disabled="@(Tows.Count == 0)">вернуть значение</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <h3 class="text-center">Значения ДУ в точках</h3>
+        <RadzenChart class="col-sm-8 m-auto">
+            <RadzenLineSeries Title="ДУ" Data="@Points" CategoryProperty="X" ValueProperty="Y">
+            </RadzenLineSeries>
+            <RadzenCategoryAxis>
+                <RadzenGridLines Visible="true" />
+                <RadzenAxisTitle Text="X" />
+            </RadzenCategoryAxis>
+            <RadzenValueAxis>
+                <RadzenGridLines Visible="true" />
+                <RadzenAxisTitle Text="Y" />
+            </RadzenValueAxis>
+        </RadzenChart>
+    </div>
+    @if (Tows.Count != 0)
+    {
+        <div class="row">
+            <RadzenChart class="col-sm-8 m-auto">
+                <RadzenLineSeries Title="Tow" Data="@Tows" CategoryProperty="Key" ValueProperty="Value">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" />
+                </RadzenLineSeries>
+                <RadzenCategoryAxis>
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="N" />
+                </RadzenCategoryAxis>
+                <RadzenValueAxis>
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="Tow" />
+                </RadzenValueAxis>
+            </RadzenChart>
+        </div>
+    }
+</div>
+
+@code
+{
+    List<AA.Methods.ValueObjects.Point> Points { get; set; }
+    Dictionary<int, double> Tows { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var duOptionsForRunge =
+            (await httpClient.GetFromJsonAsync<Dictionary<string, DUSolverOptions>>("DUOptions.json"))["ExplicitAdamsMethod"];
+
+        _duSolver.ConfigureOptions((options) =>
+        {
+            options.P = duOptionsForRunge.P;
+        });
+
+        Points = _duSolver.ExplicitAdamsMethod()
+        .Select(p =>
+            p with
+                {
+                    X = Math.Round(p.X, 3),
+                    Y = Math.Round(p.Y, 3)
+                }).ToList();
+
+        await base.OnInitializedAsync();
+    }
+
+    private Task FindTow()
+    {
+        if (Tows.Count > 0)
+            return Task.CompletedTask;
+
+        Tows = _duSolver.FindTowUsingExplicitAdamsMethod();
+        Points = _duSolver.ExplicitAdamsMethod()
+        .Select(p =>
+            p with
+                {
+                    X = Math.Round(p.X, 3),
+                    Y = Math.Round(p.Y, 3)
+                }).ToList();
+
+        return Task.CompletedTask;
+    }
+
+    private Task ResetTow()
+    {
+        Tows = new();
+        _duSolver.ResetTow();
+        Points = _duSolver.ExplicitAdamsMethod()
+        .Select(p =>
+            p with
+                {
+                    X = Math.Round(p.X, 3),
+                    Y = Math.Round(p.Y, 3)
+                }).ToList();
+
+        return Task.CompletedTask;
+    }
+}
