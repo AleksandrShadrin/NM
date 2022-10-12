@@ -13,87 +13,101 @@
 <div class="container">
     <div class="row">
         <h3 class="text-center">Значения ДУ в точках</h3>
-        <RadzenChart class="col-sm-8 m-auto">
-            <RadzenLineSeries Title="ДУ" Data="@Points" CategoryProperty="X" ValueProperty="Y">
-            </RadzenLineSeries>
-            <RadzenCategoryAxis>
-                <RadzenGridLines Visible="true" />
-                <RadzenAxisTitle Text="X" />
-            </RadzenCategoryAxis>
-            <RadzenValueAxis>
-                <RadzenGridLines Visible="true" />
-                <RadzenAxisTitle Text="Y" />
-            </RadzenValueAxis>
-        </RadzenChart>
+        <LineChart @ref="pointsChart" TItem="Point" Options="pointsChartOptions" />
     </div>
     @if (Tows.Count != 0)
     {
         <div class="row">
-            <RadzenChart class="col-sm-8 m-auto">
-                <RadzenLineSeries Title="Tow" Data="@Tows" CategoryProperty="Key" ValueProperty="Value">
-                    <RadzenMarkers MarkerType="MarkerType.Circle" />
-                </RadzenLineSeries>
-                <RadzenCategoryAxis>
-                    <RadzenGridLines Visible="true" />
-                    <RadzenAxisTitle Text="N" />
-                </RadzenCategoryAxis>
-                <RadzenValueAxis>
-                    <RadzenGridLines Visible="true" />
-                    <RadzenAxisTitle Text="Tow" />
-                </RadzenValueAxis>
-            </RadzenChart>
+            <LineChart @ref="towsChart" TItem="KeyValuePair<int,double>" Options="towsChartOptions" />
         </div>
     }
 </div>
 
 @code
 {
-    List<AA.Methods.ValueObjects.Point> Points { get; set; }
+    LineChart<Point> pointsChart;
+    LineChart<KeyValuePair<int, double>> towsChart;
+
+    List<string> backgroundColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 0.2f), ChartColor.FromRgba(54, 162, 235, 0.2f), ChartColor.FromRgba(255, 206, 86, 0.2f), ChartColor.FromRgba(75, 192, 192, 0.2f), ChartColor.FromRgba(153, 102, 255, 0.2f), ChartColor.FromRgba(255, 159, 64, 0.2f) };
+    List<string> borderColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f), ChartColor.FromRgba(54, 162, 235, 1f), ChartColor.FromRgba(255, 206, 86, 1f), ChartColor.FromRgba(75, 192, 192, 1f), ChartColor.FromRgba(153, 102, 255, 1f), ChartColor.FromRgba(255, 159, 64, 1f) };
+
+    LineChartOptions pointsChartOptions = new()
+        {
+            Parsing = new ChartParsing
+            {
+                XAxisKey = "x",
+                YAxisKey = "y"
+            },
+            Scales = new ChartScales
+            {
+                X = new ChartAxis
+                {
+                    Type = "linear"
+                }
+            }
+        };
+
+    LineChartOptions towsChartOptions = new()
+        {
+            Parsing = new ChartParsing
+            {
+                XAxisKey = "key",
+                YAxisKey = "value"
+            },
+            Scales = new ChartScales
+            {
+                X = new ChartAxis
+                {
+                    Type = "linear"
+                }
+            }
+        };
     Dictionary<int, double> Tows { get; set; } = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         var duOptionsForRunge =
-            (await httpClient.GetFromJsonAsync<Dictionary<string, DUSolverOptions>>("DUOptions.json"))["ExplicitAdamsMethod"];
+            (await httpClient.GetFromJsonAsync<Dictionary<string, DUSolverOptions>>("DUOptions.json"))["MethodRunge"];
 
         _duSolver.ConfigureOptions((options) =>
         {
             options.P = duOptionsForRunge.P;
         });
 
-        Points = _duSolver.ExplicitAdamsMethod()
-        .Select(p =>
-            p with
-                {
-                    X = Math.Round(p.X, 3),
-                    Y = Math.Round(p.Y, 3)
-                }).ToList();
-
-        await base.OnInitializedAsync();
+        await pointsChart.Update();
+        await UpdatePointsChart();
     }
 
-    private Task FindTow()
+    private async Task FindTow()
     {
         if (Tows.Count > 0)
-            return Task.CompletedTask;
+            return;
 
         Tows = _duSolver.FindTowUsingExplicitAdamsMethod();
-        Points = _duSolver.ExplicitAdamsMethod()
-        .Select(p =>
-            p with
-                {
-                    X = Math.Round(p.X, 3),
-                    Y = Math.Round(p.Y, 3)
-                }).ToList();
+        await UpdatePointsChart();
 
-        return Task.CompletedTask;
+        await towsChart.Update();
+        await towsChart.AddDataSet(new LineChartDataset<KeyValuePair<int, double>>
+            {
+                Label = "Значения tow",
+                BackgroundColor = backgroundColors[1],
+                BorderColor = borderColors[0],
+                Fill = false,
+                PointRadius = 3,
+                CubicInterpolationMode = "monotone",
+                Data = Tows.ToList()
+            });
     }
 
-    private Task ResetTow()
+    private async Task ResetTow()
     {
         Tows = new();
         _duSolver.ResetTow();
-        Points = _duSolver.ExplicitAdamsMethod()
+        await UpdatePointsChart();
+    }
+    private async Task UpdatePointsChart()
+    {
+        var points = _duSolver.ExplicitAdamsMethod()
         .Select(p =>
             p with
                 {
@@ -101,6 +115,17 @@
                     Y = Math.Round(p.Y, 3)
                 }).ToList();
 
-        return Task.CompletedTask;
+        await pointsChart.Clear();
+        await pointsChart.AddDatasetsAndUpdate(
+            new LineChartDataset<Point>
+                {
+                    Label = "Значения ДУ явным методом адамса",
+                    BackgroundColor = backgroundColors[1],
+                    BorderColor = borderColors[2],
+                    Fill = false,
+                    PointRadius = 3,
+                    CubicInterpolationMode = "monotone",
+                    Data = points
+                });
     }
 }

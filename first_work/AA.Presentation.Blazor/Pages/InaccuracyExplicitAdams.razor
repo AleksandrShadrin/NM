@@ -1,0 +1,73 @@
+﻿@page "/inaccuracy-method-explicit-adams"
+@using System.Text.Json
+@inject IInaccuracyFinder _inaccuracyFinder
+
+<div class="container">
+    <div class="row">
+        <h3 class="text-center">Погрешность в точках</h3>
+        <LineChart @ref="pointsChart" TItem="Point" Options="pointsChartOptions" />
+    </div>
+</div>
+@code {
+    LineChart<Point> pointsChart;
+
+    List<string> backgroundColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 0.2f), ChartColor.FromRgba(54, 162, 235, 0.2f), ChartColor.FromRgba(255, 206, 86, 0.2f), ChartColor.FromRgba(75, 192, 192, 0.2f), ChartColor.FromRgba(153, 102, 255, 0.2f), ChartColor.FromRgba(255, 159, 64, 0.2f) };
+    List<string> borderColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f), ChartColor.FromRgba(54, 162, 235, 1f), ChartColor.FromRgba(255, 206, 86, 1f), ChartColor.FromRgba(75, 192, 192, 1f), ChartColor.FromRgba(153, 102, 255, 1f), ChartColor.FromRgba(255, 159, 64, 1f) };
+
+    LineChartOptions pointsChartOptions = new()
+        {
+            Parsing = new ChartParsing
+            {
+                XAxisKey = "x",
+                YAxisKey = "y"
+            },
+            Scales = new ChartScales
+            {
+                X = new ChartAxis
+                {
+                    Type = "linear",
+                    Title = new ChartScaleTitle
+                    {
+                        Text = "lg(N)",
+                        Display = true,
+                    },
+                },
+                Y = new ChartAxis
+                {
+                    Title = new ChartScaleTitle
+                    {
+                        Display = true,
+                        Text = "погрешность"
+                    },
+                }
+            },
+
+        };
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await pointsChart.Clear();
+        UpdateChart();
+    }
+
+    private async Task UpdateChart()
+    {
+        var points = Enumerable.Range(1, 5)
+                            .Select(i => _inaccuracyFinder
+                                .GetInaccuracyOfExplicitAdamsMethod(Convert.ToInt32(Math.Pow(10, i))) with {X = i})
+                            .ToList();
+
+        Console.WriteLine(JsonSerializer.Serialize(points));
+        await pointsChart.Clear();
+        await pointsChart.AddDatasetsAndUpdate(
+            new LineChartDataset<Point>
+                {
+                    Label = "Погрешность",
+                    BackgroundColor = backgroundColors[1],
+                    BorderColor = borderColors[2],
+                    Fill = false,
+                    PointRadius = 3,
+                    CubicInterpolationMode = "monotone",
+                    Data = points
+                });
+    }
+}
