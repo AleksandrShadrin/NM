@@ -4,13 +4,22 @@ using AA.Presentation.Blazor;
 using AA.Methods;
 using AA.Methods.ValueObjects;
 using System.Net.Http.Json;
+using Blazorise;
+using Blazorise.Bootstrap;
+using Blazorise.Icons.FontAwesome;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
+builder.Services
+    .AddBlazorise(options =>
+    {
+        options.Immediate = true;
+    })
+    .AddBootstrapProviders()
+    .AddFontAwesomeIcons();
 
 builder.Services.AddTransient<IDUSolver, DUSolver>(p =>
 {
@@ -30,6 +39,15 @@ builder.Services.AddTransient<IDUSolver, DUSolver>(p =>
 
     duSolver.SetEquation(equation);
     return duSolver;
+});
+
+builder.Services.AddSingleton<IInaccuracyFinder, InaccuracyFinder>(sp =>
+{
+    var duSolver = sp.GetRequiredService<IDUSolver>();
+    var inaccuracyFinder = new InaccuracyFinder(duSolver);
+
+    inaccuracyFinder.SetExactSolution((t) => Math.Exp(Math.Sin(t)) + 2 * Math.Sin(t) + 2);
+    return inaccuracyFinder;
 });
 
 await builder.Build().RunAsync();
