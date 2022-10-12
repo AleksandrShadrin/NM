@@ -9,6 +9,7 @@ namespace AA.Methods
         IEnumerable<Point> MethodRunge();
         Dictionary<int, double> FindTowUsingExplicitAdamsMethod();
         IEnumerable<Point> ExplicitAdamsMethod();
+        void SetN(int value);
         void ResetTow();
         void ConfigureOptions(Action<DUSolverOptions> configure);
     }

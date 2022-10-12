@@ -78,19 +78,19 @@ namespace AA.Methods
             tns.Add(tns.Last() + tow);
             results.Add(new Point(tns.Last(), yns.Last()));
 
-            yns.Add(ExplicitAdamsMethod2(yns[0], yns[1], tns[0], tns[1]));
+            yns.Add(ExplicitAdamsMethod2(yns[1], yns[0], tns[1], tns[0]));
             tns.Add(tns.Last() + tow);
             results.Add(new Point(tns.Last(), yns.Last()));
 
-            yns.Add(ExplicitAdamsMethod3(yns[0], yns[1], yns[2], tns[0], tns[1], tns[2]));
+            yns.Add(ExplicitAdamsMethod3(yns[2], yns[1], yns[0], tns[2], tns[1], tns[0]));
             tns.Add(tns.Last() + tow);
             results.Add(new Point(tns.Last(), yns.Last()));
 
             while (Math.Abs(tns.Last() - _options.T) > tow / 2)
             {
                 yns.Add(
-                    ExplicitAdamsMethod4(yns[0], yns[1], yns[2], yns[3],
-                    tns[0], tns[1], tns[2], tns[3]));
+                    ExplicitAdamsMethod4(yns[3], yns[2], yns[1], yns[0],
+                    tns[3], tns[2], tns[1], tns[0]));
                 tns.Add(tns.Last() + tow);
                 results.Add(new Point(tns.Last(), yns.Last()));
 
@@ -162,6 +162,12 @@ namespace AA.Methods
         {
             func += equation;
         }
+
+        public void SetN(int value)
+        {
+            tow = (_options.T - _options.T0) / value;
+        }
+
         #endregion
     }
 }
