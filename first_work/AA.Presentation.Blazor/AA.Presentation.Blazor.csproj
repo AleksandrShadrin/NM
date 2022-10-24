@@ -19,4 +19,6 @@
     <ProjectReference Include="..\AA.Methods\AA.Methods.csproj" />
   </ItemGroup>
 
+  <ProjectExtensions><VisualStudio><UserProperties wwwroot_4duoptions_1json__JsonSchema="https://citation-file-format.github.io/1.2.0/schema.json" /></VisualStudio></ProjectExtensions>
+
 </Project>

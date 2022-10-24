@@ -5,6 +5,7 @@ namespace AA.Methods
     public class DUSolver : IDUSolver
     {
         private Func<double, double, double> func;
+        private Func<double, double, double> derivative;
         private double tow;
         private readonly DUSolverOptions _options;
 
@@ -29,7 +30,7 @@ namespace AA.Methods
                 points = MethodRunge();
                 if (SatisfiedCondition(lastPoint.Y, points.Last().Y))
                 {
-                    tow *= 2;
+                    result.Add(n, tow);
                     break;
                 }
                 result.Add(n, tow);
@@ -116,7 +117,7 @@ namespace AA.Methods
                 points = ExplicitAdamsMethod();
                 if (SatisfiedCondition(lastPoint.Y, points.Last().Y))
                 {
-                    tow *= 2;
+                    result.Add(n, tow);
                     break;
                 }
                 result.Add(n, tow);
@@ -142,6 +143,79 @@ namespace AA.Methods
         private double ExplicitAdamsMethod4(double yn, double yn1, double yn2, double yn3, double tn, double tn1, double tn2, double tn3)
         {
             return yn + tow / 24 * (55 * func(tn, yn) - 59 * func(tn1, yn1) + 37 * func(tn2, yn2) - 9 * func(tn3, yn3));
+        }
+        #endregion
+
+        #region ImplicitAdamsMethod
+        public void SetDerivative(Func<double, double, double> derivative)
+        {
+            this.derivative = derivative;
+        }
+
+        public IEnumerable<Point> ImplicitAdamsMethod()
+        {
+            var tn = _options.T0;
+            var yn = _options.U0;
+
+            List<Point> results = new()
+            {
+                new Point(tn, yn)
+            };
+
+            while (Math.Abs(tn - _options.T) >= tow / 2)
+            {
+                yn = ImplicitAdamsMethod0(yn, tn);
+                tn += tow;
+                results.Add(new Point(tn, yn));
+            }
+
+            return results;
+        }
+
+        public Dictionary<int, double> FindTowUsingImplicitAdamsMethod()
+        {
+            var n = (int)_options.N;
+            var result = new Dictionary<int, double>() { { n, tow } };
+
+            var points = ImplicitAdamsMethod();
+            var lastPoint = points.Last();
+            tow /= 2;
+            n *= 2;
+
+            while (true)
+            {
+                points = MethodRunge();
+                if (SatisfiedCondition(lastPoint.Y, points.Last().Y))
+                {
+                    result.Add(n, tow);
+                    break;
+                }
+                result.Add(n, tow);
+                lastPoint = points.Last();
+                tow /= 2;
+                n *= 2;
+            }
+            return result;
+        }
+
+        private double ImplicitAdamsMethod0(double yn, double tn)
+        {
+            var y_curr = yn;
+            var y_next = y_curr + 1;
+
+            if (derivative is null)
+            {
+                throw new ArgumentNullException(nameof(derivative));
+            }
+
+            while (Math.Abs(y_curr - y_next) > 10e-3)
+            {
+                y_curr = y_next;
+                y_next = y_curr - (y_curr - tow * func(tn, y_curr) - yn) /
+                    (1 - tow * derivative(tn, y_curr));
+            }
+
+            return y_next;
         }
         #endregion
 

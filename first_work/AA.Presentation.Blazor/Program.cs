@@ -36,8 +36,10 @@ builder.Services.AddTransient<IDUSolver, DUSolver>(p =>
 
     var equation =
                 (double t, double u) => u * Math.Cos(t) - Math.Sin(2 * t);
+    var derivative = (double t, double u) => Math.Cos(t);
 
     duSolver.SetEquation(equation);
+    duSolver.SetDerivative(derivative);
     return duSolver;
 });
 

@@ -18,6 +18,8 @@ namespace AA.Methods
         public Point GetInaccuracyOfMethodRunge(int n)
             => GetInaccuracyUsingMethod(n, solver.MethodRunge);
 
+        public Point GetInaccuracyOfImplicitAdamsMethod(int n)
+            => GetInaccuracyUsingMethod(n, solver.ImplicitAdamsMethod);
 
         public void SetExactSolution(Func<double, double> equation)
         {
@@ -26,7 +28,7 @@ namespace AA.Methods
 
         private Point GetInaccuracyUsingMethod(int n, Func<IEnumerable<Point>> method)
         {
-            if (n > 10e6)
+            if (n > 10e8)
                 return new(0, 0);
 
             solver.SetN(n);

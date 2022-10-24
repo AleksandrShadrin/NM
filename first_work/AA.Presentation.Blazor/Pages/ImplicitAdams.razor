@@ -1,4 +1,4 @@
-﻿@page "/explicit-adams"
+﻿@page "/implicit-adams"
 @inject IDUSolver _duSolver
 @inject HttpClient httpClient
 
@@ -66,15 +66,14 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var duOptionsForRunge =
-            (await httpClient.GetFromJsonAsync<Dictionary<string, DUSolverOptions>>("DUOptions.json"))["ExplicitAdamsMethod"];
+        //var duOptionsForRunge =
+        //    (await httpClient.GetFromJsonAsync<Dictionary<string, DUSolverOptions>>("DUOptions.json"))["ImplicitAdamsMethod"];
 
         _duSolver.ConfigureOptions((options) =>
         {
-            options.P = duOptionsForRunge.P;
+            options.P = 1;
         });
-
-        await pointsChart.Update();
+        await pointsChart.Clear();
         await UpdatePointsChart();
     }
 
@@ -107,7 +106,7 @@
     }
     private async Task UpdatePointsChart()
     {
-        var points = _duSolver.ExplicitAdamsMethod()
+        var points = _duSolver.ImplicitAdamsMethod()
         .Select(p =>
             p with
                 {
@@ -115,7 +114,6 @@
                     Y = Math.Round(p.Y, 3)
                 }).ToList();
 
-        await pointsChart.Clear();
         await pointsChart.AddDatasetsAndUpdate(
             new LineChartDataset<Point>
                 {
