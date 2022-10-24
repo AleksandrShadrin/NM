@@ -1,6 +1,7 @@
 ﻿@page "/inaccuracy"
 @using System.Text.Json
 @inject IInaccuracyFinder _inaccuracyFinder
+@inject IDUSolver _duSolver
 
 <div class="container">
     <div class="row">
@@ -51,6 +52,7 @@
 
     private async Task UpdateChart()
     {
+        _duSolver.ConfigureOptions(opt => opt.P = 1);
         var points = Enumerable.Range(3, 12)
                             .Select(i => _inaccuracyFinder
                                 .GetInaccuracyOfImplicitAdamsMethod(Convert.ToInt32(Math.Pow(2, i))) with
@@ -70,6 +72,7 @@
                     Data = points
                 });
 
+        _duSolver.ConfigureOptions(opt => opt.P = 4);
         points = Enumerable.Range(3, 12)
                     .Select(i => _inaccuracyFinder
                         .GetInaccuracyOfExplicitAdamsMethod(Convert.ToInt32(Math.Pow(2, i))) with
@@ -89,6 +92,7 @@
                     Data = points
                 });
 
+        _duSolver.ConfigureOptions(opt => opt.P = 1);
         points = Enumerable.Range(3, 12)
                     .Select(i => _inaccuracyFinder
                         .GetInaccuracyOfMethodRunge(Convert.ToInt32(Math.Pow(2, i))) with

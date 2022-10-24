@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using AA.Presentation.Blazor;
 using AA.Methods;
 using AA.Methods.ValueObjects;
-using System.Net.Http.Json;
 using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
@@ -21,9 +20,9 @@ builder.Services
     .AddBootstrapProviders()
     .AddFontAwesomeIcons();
 
-builder.Services.AddTransient<IDUSolver, DUSolver>(p =>
+builder.Services.AddSingleton<DUSolverOptions>(sp =>
 {
-    var duOptions = new DUSolverOptions
+    return new DUSolverOptions
     {
         Eps = 10e-3,
         N = 10,
@@ -32,6 +31,11 @@ builder.Services.AddTransient<IDUSolver, DUSolver>(p =>
         T0 = 0.0,
         U0 = 3.0
     };
+});
+
+builder.Services.AddTransient<IDUSolver, DUSolver>(p =>
+{
+    var duOptions = p.GetService<DUSolverOptions>();
     var duSolver = new DUSolver(duOptions);
 
     var equation =
@@ -46,7 +50,9 @@ builder.Services.AddTransient<IDUSolver, DUSolver>(p =>
 builder.Services.AddSingleton<IInaccuracyFinder, InaccuracyFinder>(sp =>
 {
     var duSolver = sp.GetRequiredService<IDUSolver>();
-    var inaccuracyFinder = new InaccuracyFinder(duSolver);
+    var duOptions = sp.GetRequiredService<DUSolverOptions>();
+
+    var inaccuracyFinder = new InaccuracyFinder(duSolver, duOptions);
 
     inaccuracyFinder.SetExactSolution((t) => Math.Exp(Math.Sin(t)) + 2 * Math.Sin(t) + 2);
     return inaccuracyFinder;
