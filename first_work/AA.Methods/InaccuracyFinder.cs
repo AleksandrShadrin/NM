@@ -53,7 +53,7 @@ namespace AA.Methods
 
             return accuracy with
             {
-                X = n,
+                X = (duOptions.T - duOptions.T0) / n,
                 Y = Math.Abs((accuracy.Y - exactEquation(accuracy.X)) / exactEquation(accuracy.X))
             };
         }
@@ -65,7 +65,7 @@ namespace AA.Methods
             var points =
                 counts
                 .Select(v => inaccuracyMethod(Convert.ToInt32(v)))
-                .Select(p => p with { X = Math.Log((duOptions.T - duOptions.T0) / p.X), Y = Math.Log(p.Y) });
+                .Select(p => p with { X = Math.Log(p.X), Y = Math.Log(p.Y) });
 
             var serie = new Serie(
                 x: points.Select(p => p.X),

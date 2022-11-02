@@ -1,4 +1,4 @@
-﻿@page "/all-methods"
+﻿@page "/all-methods-with-founded-tow"
 
 @using System.Text.Json
 @inject IInaccuracyFinder _inaccuracyFinder
@@ -8,6 +8,11 @@
     <div class="row">
         <h3 class="text-center">Все методы</h3>
         <LineChart @ref="pointsChart" TItem="Point" Options="pointsChartOptions" />
+    </div>
+</div>
+<div class="row justify-content-center">
+    <div class="col-9">
+        <AA.Presentation.Blazor.RazorComponents.InfoTable />
     </div>
 </div>
 @code {
@@ -30,7 +35,7 @@
                     Type = "linear",
                     Title = new ChartScaleTitle
                     {
-                        Text = "ln(N)",
+                        Text = "X",
                         Display = true,
                     }
                 },
@@ -39,7 +44,7 @@
                     Title = new ChartScaleTitle
                     {
                         Display = true,
-                        Text = "ln(Ψ)"
+                        Text = "Y"
                     },
                 }
             },
@@ -61,7 +66,7 @@
         await pointsChart.AddDataSet(
             new LineChartDataset<Point>
                 {
-                    Label = "Неявный метод адамса",
+                    Label = "Неявный метод адамса, (m = 1)",
                     BackgroundColor = backgroundColors[1],
                     BorderColor = borderColors[2],
                     Fill = false,
@@ -78,7 +83,7 @@
         await pointsChart.AddDataSet(
             new LineChartDataset<Point>
                 {
-                    Label = "Погрешность явного метода",
+                    Label = "Явный метод Адамса, (m = 4)",
                     BackgroundColor = backgroundColors[2],
                     BorderColor = borderColors[3],
                     Fill = false,
@@ -95,7 +100,7 @@
         await pointsChart.AddDataSet(
             new LineChartDataset<Point>
                 {
-                    Label = "Метод рунге",
+                    Label = "Метод Эйлера",
                     BackgroundColor = backgroundColors[3],
                     BorderColor = borderColors[4],
                     Fill = false,

@@ -1,32 +1,23 @@
 ﻿@page "/"
-@inject IDUSolver _duSolver
-@inject HttpClient httpClient
 
-<div class="container">
-    <div>
-        <h4>Подобрать tow: </h4>
-        <button class="btn btn-primary" @onclick="FindTow" disabled="@(Tows.Count > 0)">подобрать</button>
-        <button class="btn btn-warning" @onclick="ResetTow" disabled="@(Tows.Count == 0)">вернуть значение</button>
-    </div>
-</div>
+@using System.Text.Json
+@inject IInaccuracyFinder _inaccuracyFinder
+@inject IDUSolver _duSolver
 
 <div class="container">
     <div class="row">
-        <h3 class="text-center">Значения ДУ в точках</h3>
+        <h3 class="text-center">Все методы</h3>
         <LineChart @ref="pointsChart" TItem="Point" Options="pointsChartOptions" />
     </div>
-    @if (Tows.Count != 0)
-    {
-        <div class="row">
-            <LineChart @ref="towsChart" TItem="KeyValuePair<int,double>" Options="towsChartOptions" />
-        </div>
-    }
+</div>
+<div class="row justify-content-center">
+    <div class="col-9">
+        <AA.Presentation.Blazor.RazorComponents.InfoTable />
+    </div>
 </div>
 
-@code
-{
+@code {
     LineChart<Point> pointsChart;
-    LineChart<KeyValuePair<int, double>> towsChart;
 
     List<string> backgroundColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 0.2f), ChartColor.FromRgba(54, 162, 235, 0.2f), ChartColor.FromRgba(255, 206, 86, 0.2f), ChartColor.FromRgba(75, 192, 192, 0.2f), ChartColor.FromRgba(153, 102, 255, 0.2f), ChartColor.FromRgba(255, 159, 64, 0.2f) };
     List<string> borderColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f), ChartColor.FromRgba(54, 162, 235, 1f), ChartColor.FromRgba(255, 206, 86, 1f), ChartColor.FromRgba(75, 192, 192, 1f), ChartColor.FromRgba(153, 102, 255, 1f), ChartColor.FromRgba(255, 159, 64, 1f) };
@@ -42,75 +33,40 @@
             {
                 X = new ChartAxis
                 {
-                    Type = "linear"
-                }
-            }
-        };
-
-    LineChartOptions towsChartOptions = new()
-        {
-            Parsing = new ChartParsing
-            {
-                XAxisKey = "key",
-                YAxisKey = "value"
-            },
-            Scales = new ChartScales
-            {
-                X = new ChartAxis
+                    Type = "linear",
+                    Title = new ChartScaleTitle
+                    {
+                        Text = "X",
+                        Display = true,
+                    }
+                },
+                Y = new ChartAxis
                 {
-                    Type = "linear"
+                    Title = new ChartScaleTitle
+                    {
+                        Display = true,
+                        Text = "Y"
+                    },
                 }
-            }
-        };
-    Dictionary<int, double> Tows { get; set; } = new();
+            },
 
+        };
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await pointsChart.Clear();
-        await UpdatePointsChart();
+        UpdateChart();
     }
 
-    private async Task FindTow()
+    private async Task UpdateChart()
     {
-        if (Tows.Count > 0)
-            return;
+        var points = _duSolver.ImplicitAdamsMethod()
+                    .Select(p => p with { X = Math.Round(p.X, 5) })
+                    .ToList();
 
-        Tows = _duSolver.FindTowUsingMethodRunge();
-        await UpdatePointsChart();
-
-        await towsChart.Update();
-        await towsChart.AddDataSet(new LineChartDataset<KeyValuePair<int, double>>
-            {
-                Label = "Значения tow",
-                BackgroundColor = backgroundColors[1],
-                BorderColor = borderColors[0],
-                Fill = false,
-                PointRadius = 3,
-                CubicInterpolationMode = "monotone",
-                Data = Tows.ToList()
-            });
-    }
-
-    private async Task ResetTow()
-    {
-        Tows = new();
-        _duSolver.ResetTow();
-        await UpdatePointsChart();
-    }
-    private async Task UpdatePointsChart(){
-        var points = _duSolver.MethodRunge()
-        .Select(p =>
-            p with
-                {
-                    X = Math.Round(p.X, 3),
-                    Y = Math.Round(p.Y, 3)
-                }).ToList();
-
-        await pointsChart.Clear();
-        await pointsChart.AddDatasetsAndUpdate(
+        await pointsChart.AddDataSet(
             new LineChartDataset<Point>
                 {
-                    Label = "Значения ДУ методом рунге",
+                    Label = "Неявный метод адамса, (m = 1)",
                     BackgroundColor = backgroundColors[1],
                     BorderColor = borderColors[2],
                     Fill = false,
@@ -118,5 +74,38 @@
                     CubicInterpolationMode = "monotone",
                     Data = points
                 });
+
+        points = _duSolver.ExplicitAdamsMethod()
+                    .Select(p => p with { X = Math.Round(p.X, 5) })
+                    .ToList();
+
+        await pointsChart.AddDataSet(
+            new LineChartDataset<Point>
+                {
+                    Label = "Явный метод Адамса, (m = 4)",
+                    BackgroundColor = backgroundColors[2],
+                    BorderColor = borderColors[3],
+                    Fill = false,
+                    PointRadius = 3,
+                    CubicInterpolationMode = "monotone",
+                    Data = points
+                });
+
+        points = _duSolver.MethodRunge()
+                    .Select(p => p with { X = Math.Round(p.X, 5) })
+                    .ToList();
+
+        await pointsChart.AddDataSet(
+            new LineChartDataset<Point>
+                {
+                    Label = "Метод Эйлера",
+                    BackgroundColor = backgroundColors[3],
+                    BorderColor = borderColors[4],
+                    Fill = false,
+                    PointRadius = 3,
+                    CubicInterpolationMode = "monotone",
+                    Data = points
+                });
+        await pointsChart.Update();
     }
 }

@@ -1,0 +1,106 @@
+﻿@inject IInaccuracyFinder _inaccuracyFinder
+@inject IDUSolver _duSolver
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <td>
+                f(x)
+            </td>
+            <td>
+                Метод
+            </td>
+            <td>
+                m
+            </td>
+            <td>
+                Погрешность, N = 10
+            </td>
+            <td>
+                Погрешность (при подобранном N)
+            </td>
+            <td>
+                Практический порядок
+            </td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in dataList)
+        {
+            <tr>
+                <td>
+                    @item.Fx
+                </td>
+                <td>
+                    @item.MethodName
+                </td>
+                <td>
+                    @item.M
+                </td>
+                <td>
+                    @item.InaccuracyN10
+                </td>
+                <td>
+                    @item.InaccuracyNUpdated
+                </td>
+                <td>
+                    @item.PracticOrder
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Data> dataList = new();
+
+    protected override void OnInitialized()
+    {
+        var n_for_runge = _duSolver.FindTowUsingMethodRunge().Last().Key;
+        var data1 = new Data
+            {
+                InaccuracyN10 = _inaccuracyFinder.GetInaccuracyOfMethodRunge(10).Y,
+                InaccuracyNUpdated = _inaccuracyFinder.GetInaccuracyOfMethodRunge(n_for_runge).Y,
+                Fx = "u * cos(t) - sin(2t)",
+                MethodName = "Метод Эйлера",
+                M = 1,
+                PracticOrder = _inaccuracyFinder.FindPForMethodRunge()
+            };
+
+        var n_for_impl = _duSolver.FindTowUsingImplicitAdamsMethod().Last().Key;
+        var data2 = new Data
+            {
+                InaccuracyN10 = _inaccuracyFinder.GetInaccuracyOfImplicitAdamsMethod(10).Y,
+                InaccuracyNUpdated = _inaccuracyFinder.GetInaccuracyOfImplicitAdamsMethod(n_for_impl).Y,
+                Fx = "u * cos(t) - sin(2t)",
+                MethodName = "Неявный метод Адамса",
+                M = 1,
+                PracticOrder = _inaccuracyFinder.FindPForImplicitAdamsMethod()
+            };
+
+        var n_for_expl = _duSolver.FindTowUsingExplicitAdamsMethod().Last().Key;
+        var data3 = new Data
+            {
+                InaccuracyN10 = _inaccuracyFinder.GetInaccuracyOfExplicitAdamsMethod(10).Y,
+                InaccuracyNUpdated = _inaccuracyFinder.GetInaccuracyOfExplicitAdamsMethod(n_for_expl).Y,
+                Fx = "u * cos(t) - sin(2t)",
+                MethodName = "Явный метод Адамса",
+                M = 4,
+                PracticOrder = _inaccuracyFinder.FindPForExplicitAdamsMethod()
+            };
+
+        dataList.AddRange(new List<Data>() { data1, data2, data3 });
+
+        base.OnInitialized();
+    }
+
+    private class Data
+    {
+        public double InaccuracyN10 { get; set; }
+        public double InaccuracyNUpdated { get; set; }
+        public string Fx { get; set; }
+        public string MethodName { get; set; }
+        public int M { get; set; }
+        public double PracticOrder { get; set; }
+    }
+}
