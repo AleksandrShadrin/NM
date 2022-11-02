@@ -1,11 +1,12 @@
-﻿@page "/inaccuracy"
+﻿@page "/all-methods"
+
 @using System.Text.Json
 @inject IInaccuracyFinder _inaccuracyFinder
 @inject IDUSolver _duSolver
 
 <div class="container">
     <div class="row">
-        <h3 class="text-center">Погрешность в точках</h3>
+        <h3 class="text-center">Все методы</h3>
         <LineChart @ref="pointsChart" TItem="Point" Options="pointsChartOptions" />
     </div>
 </div>
@@ -31,7 +32,7 @@
                     {
                         Text = "ln(N)",
                         Display = true,
-                    },
+                    }
                 },
                 Y = new ChartAxis
                 {
@@ -52,18 +53,15 @@
 
     private async Task UpdateChart()
     {
-        var counts = _duSolver.FindTowUsingImplicitAdamsMethod().Keys;
-        var points = counts
-                    .Select(i => _inaccuracyFinder
-                        .GetInaccuracyOfImplicitAdamsMethod(i) with
-                        { X = Math.Log(i) })
-                    .Select(v => v with { Y = Math.Log(v.Y) })
+        _duSolver.FindTowUsingImplicitAdamsMethod();
+        var points = _duSolver.ImplicitAdamsMethod()
+                    .Select(p => p with { X = Math.Round(p.X, 5) })
                     .ToList();
 
         await pointsChart.AddDataSet(
             new LineChartDataset<Point>
                 {
-                    Label = "Погрешность неявного метода",
+                    Label = "Неявный метод адамса",
                     BackgroundColor = backgroundColors[1],
                     BorderColor = borderColors[2],
                     Fill = false,
@@ -72,12 +70,9 @@
                     Data = points
                 });
 
-        counts = _duSolver.FindTowUsingExplicitAdamsMethod().Keys;
-        points = counts
-                    .Select(i => _inaccuracyFinder
-                        .GetInaccuracyOfExplicitAdamsMethod(i) with
-                        { X = Math.Log(i) })
-                    .Select(v => v with { Y = Math.Log(v.Y) })
+        _duSolver.FindTowUsingExplicitAdamsMethod();
+        points = _duSolver.ExplicitAdamsMethod()
+                    .Select(p => p with { X = Math.Round(p.X, 5) })
                     .ToList();
 
         await pointsChart.AddDataSet(
@@ -92,18 +87,15 @@
                     Data = points
                 });
 
-        counts = _duSolver.FindTowUsingMethodRunge().Keys;
-        points = counts
-                    .Select(i => _inaccuracyFinder
-                        .GetInaccuracyOfMethodRunge(i) with
-                        { X = Math.Log(i) })
-                    .Select(v => v with { Y = Math.Log(v.Y) })
+        _duSolver.FindTowUsingMethodRunge();
+        points = _duSolver.MethodRunge()
+                    .Select(p => p with {X = Math.Round(p.X, 5)})
                     .ToList();
 
         await pointsChart.AddDataSet(
             new LineChartDataset<Point>
                 {
-                    Label = "Погрешность метода рунге",
+                    Label = "Метод рунге",
                     BackgroundColor = backgroundColors[3],
                     BorderColor = borderColors[4],
                     Fill = false,

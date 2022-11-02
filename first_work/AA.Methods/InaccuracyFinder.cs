@@ -30,13 +30,13 @@ namespace AA.Methods
             exactEquation = equation;
         }
         public double FindPForMethodRunge()
-            => GetPForMethod(GetInaccuracyOfMethodRunge);
+            => GetPForMethod(GetInaccuracyOfMethodRunge, solver.FindTowUsingMethodRunge);
 
         public double FindPForExplicitAdamsMethod()
-            => GetPForMethod(GetInaccuracyOfExplicitAdamsMethod);
+            => GetPForMethod(GetInaccuracyOfExplicitAdamsMethod, solver.FindTowUsingExplicitAdamsMethod);
 
         public double FindPForImplicitAdamsMethod()
-            => GetPForMethod(GetInaccuracyOfImplicitAdamsMethod);
+            => GetPForMethod(GetInaccuracyOfImplicitAdamsMethod, solver.FindTowUsingImplicitAdamsMethod);
 
         private Point GetInaccuracyUsingMethod(int n, Func<IEnumerable<Point>> method)
         {
@@ -58,11 +58,12 @@ namespace AA.Methods
             };
         }
 
-        private double GetPForMethod(Func<int, Point> inaccuracyMethod)
+        private double GetPForMethod(Func<int, Point> inaccuracyMethod, Func<Dictionary<int, double>> getTow)
         {
+            var counts = getTow().Keys;
+
             var points =
-                Enumerable.Range(2, 14)
-                .Select(v => Math.Pow(2, v))
+                counts
                 .Select(v => inaccuracyMethod(Convert.ToInt32(v)))
                 .Select(p => p with { X = Math.Log((duOptions.T - duOptions.T0) / p.X), Y = Math.Log(p.Y) });
 

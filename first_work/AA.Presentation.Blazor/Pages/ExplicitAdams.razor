@@ -66,15 +66,7 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var duOptionsForRunge =
-            (await httpClient.GetFromJsonAsync<Dictionary<string, DUSolverOptions>>("DUOptions.json"))["ExplicitAdamsMethod"];
-
-        _duSolver.ConfigureOptions((options) =>
-        {
-            options.P = duOptionsForRunge.P;
-        });
-
-        await pointsChart.Update();
+        await pointsChart.Clear();
         await UpdatePointsChart();
     }
 

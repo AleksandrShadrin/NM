@@ -24,13 +24,10 @@
 
     protected override Task OnInitializedAsync()
     {
-        _duSolver.ConfigureOptions(opt => opt.P = 1);
         PForImplicitAdams = _inaccuracyFinder.FindPForImplicitAdamsMethod();
 
-        _duSolver.ConfigureOptions(opt => opt.P = 4);
         PForExplicitAdams = _inaccuracyFinder.FindPForExplicitAdamsMethod();
 
-        _duSolver.ConfigureOptions(opt => opt.P = 1);
         PForRunge = _inaccuracyFinder.FindPForMethodRunge();
 
         return base.OnInitializedAsync();

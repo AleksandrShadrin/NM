@@ -42,7 +42,7 @@
             {
                 X = new ChartAxis
                 {
-                    Type = "linear"
+                    Type = "linear",
                 }
             }
         };
@@ -66,13 +66,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        //var duOptionsForRunge =
-        //    (await httpClient.GetFromJsonAsync<Dictionary<string, DUSolverOptions>>("DUOptions.json"))["ImplicitAdamsMethod"];
-
-        _duSolver.ConfigureOptions((options) =>
-        {
-            options.P = 1;
-        });
         await pointsChart.Clear();
         await UpdatePointsChart();
     }
@@ -82,7 +75,7 @@
         if (Tows.Count > 0)
             return;
 
-        Tows = _duSolver.FindTowUsingExplicitAdamsMethod();
+        Tows = _duSolver.FindTowUsingImplicitAdamsMethod();
         await UpdatePointsChart();
 
         await towsChart.Update();
@@ -93,7 +86,6 @@
                 BorderColor = borderColors[0],
                 Fill = false,
                 PointRadius = 3,
-                CubicInterpolationMode = "monotone",
                 Data = Tows.ToList()
             });
     }

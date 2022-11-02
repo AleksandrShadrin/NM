@@ -18,6 +18,7 @@ namespace AA.Methods
         public Dictionary<int, double> FindTowUsingMethodRunge()
         {
             var n = (int)_options.N;
+            ResetTow();
             var result = new Dictionary<int, double>() { { n, tow } };
 
             var points = MethodRunge();
@@ -43,6 +44,7 @@ namespace AA.Methods
 
         public IEnumerable<Point> MethodRunge()
         {
+            _options.P = 1;
             var tn = _options.T0;
             var yn = _options.U0;
 
@@ -70,6 +72,7 @@ namespace AA.Methods
         #region ExplicitAdamsMethod
         public IEnumerable<Point> ExplicitAdamsMethod()
         {
+            _options.P = 4;
             List<double> yns = new() { _options.U0 };
             List<double> tns = new() { _options.T0 };
 
@@ -105,6 +108,7 @@ namespace AA.Methods
         public Dictionary<int, double> FindTowUsingExplicitAdamsMethod()
         {
             var n = (int)_options.N;
+            ResetTow();
             var result = new Dictionary<int, double>() { { n, tow } };
 
             var points = ExplicitAdamsMethod();
@@ -154,6 +158,7 @@ namespace AA.Methods
 
         public IEnumerable<Point> ImplicitAdamsMethod()
         {
+            _options.P = 2;
             var tn = _options.T0;
             var yn = _options.U0;
 
@@ -175,6 +180,7 @@ namespace AA.Methods
         public Dictionary<int, double> FindTowUsingImplicitAdamsMethod()
         {
             var n = (int)_options.N;
+            ResetTow();
             var result = new Dictionary<int, double>() { { n, tow } };
 
             var points = ImplicitAdamsMethod();
@@ -184,7 +190,7 @@ namespace AA.Methods
 
             while (true)
             {
-                points = MethodRunge();
+                points = ImplicitAdamsMethod();
                 if (SatisfiedCondition(lastPoint.Y, points.Last().Y))
                 {
                     result.Add(n, tow);
@@ -208,7 +214,7 @@ namespace AA.Methods
                 throw new ArgumentNullException(nameof(derivative));
             }
 
-            while (Math.Abs(y_curr - y_next) > 10e-3)
+            while (Math.Abs(y_curr - y_next) > _options.Eps)
             {
                 y_curr = y_next;
                 y_next = y_curr - (y_curr - tow * func(tn, y_curr) - yn) /
