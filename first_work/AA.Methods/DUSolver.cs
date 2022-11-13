@@ -29,6 +29,7 @@ namespace AA.Methods
             while (true)
             {
                 points = MethodRunge();
+
                 if (SatisfiedCondition(lastPoint.Y, points.Last().Y))
                 {
                     result.Add(n, tow);
@@ -52,7 +53,6 @@ namespace AA.Methods
             {
                 new Point(tn, yn)
             };
-
             while (Math.Abs(tn - _options.T) >= tow / 2)
             {
                 yn = MethodRunge(yn, tn);
@@ -90,7 +90,7 @@ namespace AA.Methods
             tns.Add(tns.Last() + tow);
             results.Add(new Point(tns.Last(), yns.Last()));
 
-            while (Math.Abs(tns.Last() - _options.T) > tow / 2)
+            while (Math.Abs(tns.Last() - _options.T) >= tow / 2)
             {
                 yns.Add(
                     ExplicitAdamsMethod4(yns[3], yns[2], yns[1], yns[0],
@@ -98,8 +98,8 @@ namespace AA.Methods
                 tns.Add(tns.Last() + tow);
                 results.Add(new Point(tns.Last(), yns.Last()));
 
-                yns.Remove(yns.First());
-                tns.Remove(tns.First());
+                yns.RemoveAt(0);
+                tns.RemoveAt(0);
             }
 
             return results;
@@ -207,18 +207,19 @@ namespace AA.Methods
         private double ImplicitAdamsMethod0(double yn, double tn)
         {
             var y_curr = yn;
-            var y_next = y_curr + 1;
+            var y_next = y_curr - (y_curr - yn - tow / 2 * (func(tn + tow, y_curr) + func(tn, yn))) /
+                    (1 - tow / 2 * derivative(tn + tow, y_curr));
 
             if (derivative is null)
             {
                 throw new ArgumentNullException(nameof(derivative));
             }
 
-            while (Math.Abs(y_curr - y_next) > _options.Eps)
+            while (Math.Abs(y_curr - y_next) > 10e-3)
             {
                 y_curr = y_next;
-                y_next = y_curr - (y_curr - tow * func(tn, y_curr) - yn) /
-                    (1 - tow * derivative(tn, y_curr));
+                y_next = y_curr - (y_curr - yn - tow / 2 * (func(tn + tow, y_curr) + func(tn, yn))) /
+                    (1 - tow / 2 * derivative(tn + tow, y_curr));
             }
 
             return y_next;
@@ -247,7 +248,6 @@ namespace AA.Methods
         {
             tow = (_options.T - _options.T0) / value;
         }
-
         #endregion
     }
 }
